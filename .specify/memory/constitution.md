@@ -1,50 +1,116 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+  SYNC IMPACT REPORT
+  ==================
+  Version change: 0.0.0 → 1.0.0 (initial constitution)
+
+  Modified principles: N/A (initial creation)
+
+  Added sections:
+  - Core Principles (5 principles)
+  - Security Requirements
+  - Governance
+
+  Removed sections: N/A
+
+  Templates requiring updates:
+  - .specify/templates/plan-template.md: ✅ compatible (Constitution Check section exists)
+  - .specify/templates/spec-template.md: ✅ compatible (requirements structure aligns)
+  - .specify/templates/tasks-template.md: ✅ compatible (testing discipline supported)
+
+  Follow-up TODOs: None
+-->
+
+# tblsp Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Component-Based Architecture
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All user interface elements MUST be implemented as reusable React components. Components MUST:
+- Be self-contained with clearly defined props interfaces
+- Follow single-responsibility principle (one component = one concern)
+- Be independently testable without requiring the full application context
+- Use TypeScript for type safety with explicit prop types
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Component-based architecture enables parallel development, simplifies testing,
+and promotes code reuse across the application.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Type Safety First
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+TypeScript MUST be used throughout the codebase with strict mode enabled. Requirements:
+- No use of `any` type except in explicitly justified edge cases (documented inline)
+- All API responses and requests MUST have defined TypeScript interfaces
+- Shared types MUST be centralized in a dedicated types directory
+- Generic types preferred over type assertions where possible
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: Strong typing catches errors at compile time, improves IDE support, and serves
+as living documentation for data structures.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. API Contract Discipline
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Frontend and backend MUST communicate through well-defined API contracts. Requirements:
+- All endpoints MUST have documented request/response schemas
+- Breaking changes to APIs require explicit versioning or migration path
+- API errors MUST return structured error responses with actionable messages
+- Contract changes MUST be reviewed for backward compatibility impact
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: Clear API contracts enable frontend and backend to evolve independently while
+maintaining integration stability.
+
+### IV. Test Coverage Expectations
+
+Tests SHOULD accompany all features and bug fixes. Requirements:
+- New components SHOULD have unit tests covering primary use cases
+- API endpoints SHOULD have integration tests validating happy path and error cases
+- Critical user flows SHOULD have end-to-end test coverage
+- Test files MUST be co-located with or clearly mapped to source files
+
+**Rationale**: Tests provide regression protection and documentation of expected behavior,
+enabling confident refactoring and feature additions.
+
+### V. Simplicity and YAGNI
+
+Features MUST solve current requirements without speculative generalization. Requirements:
+- No abstraction without at least two concrete use cases
+- Configuration options MUST be justified by actual user needs
+- Dependencies MUST be evaluated for size, maintenance status, and necessity
+- Code complexity MUST be justified in PR descriptions when introducing non-obvious patterns
+
+**Rationale**: Premature optimization and over-engineering create maintenance burden and
+obscure business logic.
+
+## Security Requirements
+
+All code MUST adhere to security best practices appropriate for web applications:
+
+- **Input Validation**: All user input MUST be validated and sanitized before processing
+- **Authentication**: Protected routes MUST verify user authentication before rendering
+- **Authorization**: Actions MUST verify user permissions before execution
+- **Data Exposure**: API responses MUST NOT expose sensitive data beyond what is required
+- **Dependencies**: Security advisories for dependencies MUST be reviewed and addressed promptly
+- **Secrets Management**: Secrets and API keys MUST NOT be committed to version control
+
+Violations of security requirements MUST be treated as high-priority issues regardless of
+feature deadlines.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution establishes the foundational principles for the tblsp project. All
+development decisions SHOULD align with these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Amendment Process**:
+1. Proposed changes MUST be documented with rationale
+2. Changes require review and approval from project maintainers
+3. Breaking changes to principles require migration guidance for existing code
+
+**Compliance**:
+- Code reviews SHOULD verify alignment with constitutional principles
+- Principle violations MUST be documented if deemed necessary, with justification
+- Complexity beyond stated principles MUST be justified in context
+
+**Versioning**:
+- MAJOR version: Principle removal or incompatible redefinition
+- MINOR version: New principle or materially expanded guidance
+- PATCH version: Clarifications, wording improvements, typo fixes
+
+**Version**: 1.0.0 | **Ratified**: 2025-12-25 | **Last Amended**: 2025-12-25
