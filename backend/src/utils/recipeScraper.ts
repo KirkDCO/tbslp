@@ -122,7 +122,7 @@ function extractJsonLdRecipe($: cheerio.CheerioAPI): ExtractedRecipe | null {
         const ingredients = extractIngredients(recipe);
         const instructions = extractInstructions(recipe.recipeInstructions);
         const availableImages = extractAllImageUrls(recipe.image);
-        const imageUrl = availableImages.length > 0 ? availableImages[0] : null;
+        const imageUrl = availableImages[0] ?? null;
 
         // Only return if we have meaningful content
         if (ingredients.length > 0 || instructions.length > 0) {
@@ -438,7 +438,7 @@ function extractMicrodataRecipe(
       if (resolved) availableImages.push(resolved);
     }
   });
-  const imageUrl = availableImages.length > 0 ? availableImages[0] : null;
+  const imageUrl = availableImages[0] ?? null;
 
   if (title && (ingredients || instructions)) {
     return {
@@ -480,7 +480,8 @@ function extractHeuristicRecipe($: cheerio.CheerioAPI, baseUrl: string): Extract
   }
 
   if (!title) {
-    title = cleanText($('title').text().split('|')[0].split('-')[0]);
+    const pageTitle = $('title').text().split('|')[0] ?? '';
+    title = cleanText(pageTitle.split('-')[0] ?? '');
   }
 
   // Look for ingredients

@@ -30,7 +30,7 @@ export const tagMappings: Record<string, string[]> = {
   'soy sauce': ['Asian'],
   ginger: ['Asian'],
   sesame: ['Asian'],
-  tofu: ['Asian', 'Vegetarian'],
+  tofu: ['Asian', 'Vegetarian', 'Vegan'],
   miso: ['Japanese'],
   sushi: ['Japanese'],
 
@@ -49,7 +49,7 @@ export const tagMappings: Record<string, string[]> = {
   waffle: ['Breakfast'],
   omelette: ['Breakfast'],
   omelet: ['Breakfast'],
-  bacon: ['Breakfast'],
+  bacon: ['Breakfast', 'Pork'],
   cereal: ['Breakfast'],
   oatmeal: ['Breakfast'],
   toast: ['Breakfast'],
@@ -64,7 +64,6 @@ export const tagMappings: Record<string, string[]> = {
   wrap: ['Lunch'],
 
   // Dietary
-  tofu: ['Vegetarian', 'Vegan'],
   tempeh: ['Vegetarian', 'Vegan'],
   lentil: ['Vegetarian', 'Healthy'],
   chickpea: ['Vegetarian', 'Healthy'],
@@ -79,7 +78,6 @@ export const tagMappings: Record<string, string[]> = {
   'ground beef': ['Beef'],
 
   pork: ['Pork'],
-  bacon: ['Pork'],
   ham: ['Pork'],
 
   salmon: ['Seafood', 'Fish'],
