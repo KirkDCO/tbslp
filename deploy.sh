@@ -30,9 +30,9 @@ echo "=== Building frontend ==="
 (cd frontend && npm run build)
 echo ""
 
-# Build backend
+# Build backend (clean first to avoid stale files)
 echo "=== Building backend ==="
-(cd backend && npm run build)
+(cd backend && rm -rf dist && npm run build)
 echo ""
 
 # Setup production environment
@@ -58,6 +58,9 @@ echo "  cd backend && npm start"
 echo ""
 echo "Or for background operation:"
 echo "  cd backend && nohup npm start > ../tblsp.log 2>&1 &"
+echo ""
+echo "To add sample recipes (optional):"
+echo "  cd backend && npm run db:seed"
 echo ""
 echo "Access tblsp from any device at:"
 echo "  http://${IP_ADDR}:3001"
