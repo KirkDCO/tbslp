@@ -11,7 +11,9 @@ try {
 }
 
 // Start server
-app.listen(config.port, () => {
-  console.log(`Server running on http://localhost:${config.port}`);
+app.listen(config.port, config.host, () => {
+  const displayHost = config.host === '0.0.0.0' ? 'all interfaces' : config.host;
+  console.log(`Server running on http://${config.host}:${config.port}`);
+  console.log(`Accessible from: ${displayHost}`);
   console.log(`Environment: ${config.nodeEnv}`);
 });

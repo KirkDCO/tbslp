@@ -27,10 +27,13 @@ const dataDir = process.env['DATA_DIR'] ?? join(__dirname, '..', 'data');
 
 export const config = {
   port: parseInt(process.env['PORT'] ?? '3001', 10),
+  host: process.env['HOST'] ?? 'localhost',
   nodeEnv: process.env['NODE_ENV'] ?? 'development',
   databasePath: process.env['DATABASE_PATH'] ?? join(__dirname, '..', 'db', 'recipes.db'),
   corsOrigin: process.env['CORS_ORIGIN'] ?? 'http://localhost:5173',
   dataDir,
+  // Path to frontend build for production serving
+  frontendPath: process.env['FRONTEND_PATH'] ?? join(__dirname, '..', '..', 'frontend', 'dist'),
 } as const;
 
 export type Config = typeof config;
