@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { existsSync } from 'fs';
 import { config } from './config.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
@@ -49,7 +49,7 @@ if (config.nodeEnv === 'production' && existsSync(config.frontendPath)) {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
       return next();
     }
-    res.sendFile(join(config.frontendPath, 'index.html'));
+    res.sendFile(resolve(config.frontendPath, 'index.html'));
   });
 }
 

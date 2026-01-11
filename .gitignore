@@ -44,3 +44,6 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Local service configuration
+tblsp.service
