@@ -104,6 +104,190 @@ function cleanText(text: string | undefined | null): string {
     .trim();
 }
 
+// Check if ingredient lines appear to lack quantities (just names without measurements)
+function ingredientsLackQuantities(ingredientsRaw: string): boolean {
+  const lines = ingredientsRaw.split('\n').filter((l) => l.trim().length > 0);
+  if (lines.length === 0) return false;
+
+  // Pattern to detect quantities: numbers, fractions, or unicode fractions
+  const quantityPattern = /^[\d½¼¾⅓⅔⅛⅜⅝⅞]+|^\d+\/\d+/;
+
+  // Count how many lines have quantities
+  const withQuantity = lines.filter((line) => quantityPattern.test(line.trim())).length;
+
+  // If less than 30% have quantities, consider them incomplete
+  return withQuantity / lines.length < 0.3;
+}
+
+// Extract ingredients from HTML when JSON-LD is incomplete
+// Handles both table-based and div-based layouts (like recipeland.com)
+function extractTableIngredients($: cheerio.CheerioAPI): string | null {
+  // Try div-based ingredient rows first (like recipeland.com)
+  const divIngredients = extractDivBasedIngredients($);
+  if (divIngredients && divIngredients.length >= 2) {
+    return divIngredients.join('\n');
+  }
+
+  // Fall back to table-based extraction
+  const tableSelectors = [
+    'table.ingredients-body',
+    'table.ingredients',
+    '[class*="ingredient"] table',
+    'table[class*="ingredient"]',
+  ];
+
+  for (const selector of tableSelectors) {
+    const table = $(selector);
+    if (table.length > 0) {
+      const ingredients = extractIngredientsFromTable($, table);
+      if (ingredients.length >= 2) {
+        return ingredients.join('\n');
+      }
+    }
+  }
+
+  // Try any table with ingredient-like rows
+  const tables = $('table');
+  for (let i = 0; i < tables.length; i++) {
+    const table = $(tables[i]);
+    if (
+      table.find('tr.ingredient-row, tr[class*="ingredient"]').length > 0 ||
+      table.find('td.amount-measure, td[class*="amount"], td[class*="measure"]').length > 0
+    ) {
+      const ingredients = extractIngredientsFromTable($, table);
+      if (ingredients.length >= 2) {
+        return ingredients.join('\n');
+      }
+    }
+  }
+
+  return null;
+}
+
+// Extract ingredients from div-based layouts (like recipeland.com)
+// Structure: div.ingredient-row > div.amount-measure + div.ingredient
+function extractDivBasedIngredients($: cheerio.CheerioAPI): string[] | null {
+  const ingredientRows = $('.ingredient-row, [class*="ingredient-row"]');
+  if (ingredientRows.length < 2) return null;
+
+  const ingredients: string[] = [];
+
+  ingredientRows.each((_, row) => {
+    const $row = $(row);
+
+    // Extract amount from amount-measure div
+    // Prefer US measurements (span.ir-us) over metric
+    let amount = '';
+    const amountDiv = $row.find('.amount-measure, [class*="amount"]').first();
+    if (amountDiv.length > 0) {
+      const usAmount = amountDiv.find('.ir-us, [class*="-us"]').first();
+      if (usAmount.length > 0) {
+        amount = cleanText(usAmount.text());
+      } else {
+        amount = cleanText(amountDiv.text());
+      }
+    }
+
+    // Extract unit and ingredient name from ingredient div
+    let unit = '';
+    let ingredientName = '';
+    const ingredientDiv = $row.find('.ingredient, [class*="ingredient"]').not('.ingredient-row').first();
+    if (ingredientDiv.length > 0) {
+      // Get US unit if available
+      const usUnit = ingredientDiv.find('.ir-us, [class*="-us"]').first();
+      if (usUnit.length > 0) {
+        unit = cleanText(usUnit.text());
+      }
+
+      // Get ingredient name from link or text
+      const link = ingredientDiv.find('a').first();
+      if (link.length > 0) {
+        ingredientName = cleanText(link.text());
+      } else {
+        // Remove unit spans and get remaining text
+        const clone = ingredientDiv.clone();
+        clone.find('.ir-us, .ir-metric, [class*="-us"], [class*="-metric"]').remove();
+        ingredientName = cleanText(clone.text());
+      }
+    }
+
+    // Combine parts
+    if (ingredientName) {
+      const parts = [amount, unit, ingredientName].filter((p) => p.length > 0);
+      const combined = parts.join(' ').trim();
+      if (combined.length > 1) {
+        ingredients.push(combined);
+      }
+    }
+  });
+
+  return ingredients.length > 0 ? ingredients : null;
+}
+
+// Extract ingredient lines from a table element
+function extractIngredientsFromTable(
+  $: cheerio.CheerioAPI,
+  table: ReturnType<typeof $>
+): string[] {
+  const ingredients: string[] = [];
+
+  table.find('tr').each((_, row) => {
+    const cells = $(row).find('td');
+    if (cells.length >= 2) {
+      // Try to identify amount and ingredient cells
+      let amount = '';
+      let ingredient = '';
+
+      cells.each((idx, cell) => {
+        const cellText = cleanText($(cell).text());
+        const cellClass = $(cell).attr('class') || '';
+
+        // Check for amount/measure cells by class or content
+        if (
+          cellClass.includes('amount') ||
+          cellClass.includes('measure') ||
+          cellClass.includes('quantity')
+        ) {
+          amount = cellText;
+        } else if (cellClass.includes('ingredient') || cellClass.includes('name')) {
+          ingredient = cellText;
+        } else if (idx === 0 && /^[\d½¼¾⅓⅔⅛⅜⅝⅞\/\s]+$/.test(cellText)) {
+          // First cell that looks like a measurement
+          amount = cellText;
+        } else if (!ingredient && cellText.length > 1) {
+          // Assume other cells with text are ingredient names
+          ingredient = cellText;
+        }
+      });
+
+      // Combine amount and ingredient if both found
+      if (ingredient) {
+        const combined = amount ? `${normalizeAmount(amount)} ${ingredient}` : ingredient;
+        if (combined.length > 1) {
+          ingredients.push(combined.trim());
+        }
+      }
+    }
+  });
+
+  return ingredients;
+}
+
+// Normalize amount strings (e.g., "¼ / 59" -> "¼ cup" or just "¼")
+function normalizeAmount(amount: string): string {
+  // Remove metric equivalents shown after slash (e.g., "¼ / 59" -> "¼")
+  const cleaned = amount.replace(/\s*\/\s*[\d.]+\s*(mL|g|ml|grams?)?/gi, '').trim();
+
+  // Map common fraction patterns to readable form
+  return cleaned
+    .replace(/1\/4/g, '¼')
+    .replace(/1\/2/g, '½')
+    .replace(/3\/4/g, '¾')
+    .replace(/1\/3/g, '⅓')
+    .replace(/2\/3/g, '⅔')
+    .replace(/1\/8/g, '⅛');
+}
+
 function extractJsonLdRecipe($: cheerio.CheerioAPI): ExtractedRecipe | null {
   const scripts = $('script[type="application/ld+json"]');
 
@@ -119,10 +303,19 @@ function extractJsonLdRecipe($: cheerio.CheerioAPI): ExtractedRecipe | null {
         const title = cleanText(recipe.name || recipe.headline);
         if (!title) continue;
 
-        const ingredients = extractIngredients(recipe);
+        let ingredients = extractIngredients(recipe);
         const instructions = extractInstructions(recipe.recipeInstructions);
         const availableImages = extractAllImageUrls(recipe.image);
         const imageUrl = availableImages[0] ?? null;
+
+        // Check if JSON-LD ingredients appear incomplete (missing quantities)
+        // If most ingredients lack numbers/measurements, try HTML table extraction
+        if (ingredients && ingredientsLackQuantities(ingredients)) {
+          const tableIngredients = extractTableIngredients($);
+          if (tableIngredients) {
+            ingredients = tableIngredients;
+          }
+        }
 
         // Only return if we have meaningful content
         if (ingredients.length > 0 || instructions.length > 0) {

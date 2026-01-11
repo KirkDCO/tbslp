@@ -13,9 +13,11 @@ interface SearchPaneProps {
   onSelectRecipe: (id: number) => void;
   onAddClick: () => void;
   onImportClick: () => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-export function SearchPane({ selectedRecipeId, onSelectRecipe, onAddClick, onImportClick }: SearchPaneProps) {
+export function SearchPane({ selectedRecipeId, onSelectRecipe, onAddClick, onImportClick, isCollapsed, onToggleCollapse }: SearchPaneProps) {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useState<UseRecipesParams>({
     search: '',
@@ -55,6 +57,17 @@ export function SearchPane({ selectedRecipeId, onSelectRecipe, onAddClick, onImp
 
   return (
     <div className="search-pane">
+      <div className="search-pane-mobile-header">
+        <span>Search & Filter</span>
+        <button
+          type="button"
+          className="search-pane-close-btn"
+          onClick={onToggleCollapse}
+          aria-label="Close search pane"
+        >
+          ✕
+        </button>
+      </div>
       <div className="search-pane-actions">
         <button type="button" onClick={onAddClick} className="btn-add">
           + Add Recipe
@@ -96,6 +109,32 @@ export function SearchPane({ selectedRecipeId, onSelectRecipe, onAddClick, onImp
           display: flex;
           flex-direction: column;
           height: 100%;
+        }
+        .search-pane-mobile-header {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .search-pane-mobile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-border);
+            font-weight: 600;
+            font-size: 1.125rem;
+          }
+          .search-pane-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--color-text-muted);
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+          }
+          .search-pane-close-btn:hover {
+            color: var(--color-text);
+          }
         }
         .search-pane-actions {
           display: flex;

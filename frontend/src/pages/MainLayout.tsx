@@ -16,6 +16,7 @@ export function MainLayout() {
   const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('view');
   const [formError, setFormError] = useState<string | null>(null);
+  const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
 
   const { data: recipe, isLoading: recipeLoading } = useRecipe(selectedRecipeId);
   const createMutation = useCreateRecipe();
@@ -89,19 +90,34 @@ export function MainLayout() {
     setSelectedRecipeId(id);
     setViewMode('view');
     setFormError(null);
+    setSearchPaneCollapsed(true);
+  };
+
+  const toggleSearchPane = () => {
+    setSearchPaneCollapsed((prev) => !prev);
   };
 
   return (
     <div className="main-layout">
-      <aside className="left-pane">
+      <aside className={`left-pane ${searchPaneCollapsed ? 'collapsed' : ''}`}>
         <SearchPane
           selectedRecipeId={selectedRecipeId}
           onSelectRecipe={handleSelectRecipe}
           onAddClick={handleAddClick}
           onImportClick={handleImportClick}
+          isCollapsed={searchPaneCollapsed}
+          onToggleCollapse={toggleSearchPane}
         />
       </aside>
       <main className="right-pane">
+        <button
+          type="button"
+          className="mobile-search-toggle"
+          onClick={toggleSearchPane}
+          aria-label={searchPaneCollapsed ? 'Show search' : 'Hide search'}
+        >
+          {searchPaneCollapsed ? '☰ Search' : '✕ Close'}
+        </button>
         {viewMode === 'create' && (
           <RecipeForm
             onSubmit={handleCreate}
