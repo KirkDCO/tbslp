@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SearchPane } from '../components/SearchPane';
 import { RecipeView } from '../components/RecipeView';
 import { RecipeForm } from '../components/RecipeForm';
 import { ImportDialog } from '../components/ImportDialog';
 import { useRecipe } from '../hooks/useRecipe';
+import { useRecipes } from '../hooks/useRecipes';
 import { useCreateRecipe } from '../hooks/useCreateRecipe';
 import { useUpdateRecipe } from '../hooks/useUpdateRecipe';
 import { useDeleteRecipe } from '../hooks/useDeleteRecipe';
@@ -17,6 +18,19 @@ export function MainLayout() {
   const [viewMode, setViewMode] = useState<ViewMode>('view');
   const [formError, setFormError] = useState<string | null>(null);
   const [searchPaneCollapsed, setSearchPaneCollapsed] = useState(false);
+  const hasSetInitialRecipe = useRef(false);
+
+  // Fetch a random recipe on initial load
+  const { data: randomRecipeData } = useRecipes({ sort: 'random', limit: 1 });
+
+  // Set the random recipe as selected on initial load
+  useEffect(() => {
+    const firstRecipe = randomRecipeData?.recipes?.[0];
+    if (!hasSetInitialRecipe.current && firstRecipe) {
+      setSelectedRecipeId(firstRecipe.id);
+      hasSetInitialRecipe.current = true;
+    }
+  }, [randomRecipeData]);
 
   const { data: recipe, isLoading: recipeLoading } = useRecipe(selectedRecipeId);
   const createMutation = useCreateRecipe();
