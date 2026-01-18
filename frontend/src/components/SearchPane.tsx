@@ -7,6 +7,7 @@ import { RecipeList } from './RecipeList';
 import { AddRecipeButton } from './AddRecipeButton';
 import { useRecipes, type UseRecipesParams } from '../hooks/useRecipes';
 import { useTags } from '../hooks/useTags';
+import { useDeleteTag } from '../hooks/useDeleteTag';
 
 interface SearchPaneProps {
   selectedRecipeId: number | null;
@@ -28,6 +29,7 @@ export function SearchPane({ selectedRecipeId, onSelectRecipe, onAddClick, onImp
 
   const { data: recipesData, isLoading: recipesLoading } = useRecipes(searchParams);
   const { data: tags, isLoading: tagsLoading } = useTags();
+  const deleteTagMutation = useDeleteTag();
 
   const handleSearchChange = useCallback((search: string) => {
     setSearchParams((prev) => ({ ...prev, search }));
@@ -42,6 +44,15 @@ export function SearchPane({ selectedRecipeId, onSelectRecipe, onAddClick, onImp
       return { ...prev, tags: newTags };
     });
   }, []);
+
+  const handleTagDelete = useCallback((tagId: number) => {
+    // Remove from selected tags if present
+    setSearchParams((prev) => ({
+      ...prev,
+      tags: (prev.tags || []).filter((id) => id !== tagId),
+    }));
+    deleteTagMutation.mutate(tagId);
+  }, [deleteTagMutation]);
 
   const handleSortChange = useCallback((sort: UseRecipesParams['sort']) => {
     setSearchParams((prev) => ({ ...prev, sort }));
@@ -85,6 +96,7 @@ export function SearchPane({ selectedRecipeId, onSelectRecipe, onAddClick, onImp
           tags={tags || []}
           selectedTags={searchParams.tags || []}
           onTagToggle={handleTagToggle}
+          onTagDelete={handleTagDelete}
           isLoading={tagsLoading}
         />
         <SortControls

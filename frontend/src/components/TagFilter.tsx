@@ -5,11 +5,13 @@ interface TagFilterProps {
   tags: TagWithCount[];
   selectedTags: number[];
   onTagToggle: (tagId: number) => void;
+  onTagDelete?: (tagId: number) => void;
   isLoading?: boolean;
 }
 
-export function TagFilter({ tags, selectedTags, onTagToggle, isLoading }: TagFilterProps) {
+export function TagFilter({ tags, selectedTags, onTagToggle, onTagDelete, isLoading }: TagFilterProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   if (isLoading) {
     return <div className="tag-filter-loading">Loading tags...</div>;
@@ -39,15 +41,34 @@ export function TagFilter({ tags, selectedTags, onTagToggle, isLoading }: TagFil
       </button>
       {!isCollapsed && <div className="tag-list">
         {tags.map((tag) => (
-          <button
-            key={tag.id}
-            type="button"
-            onClick={() => onTagToggle(tag.id)}
-            className={`tag-button ${selectedTags.includes(tag.id) ? 'selected' : ''}`}
-          >
-            {tag.name}
-            <span className="tag-count">{tag.recipeCount}</span>
-          </button>
+          <div key={tag.id} className="tag-item">
+            <button
+              type="button"
+              onClick={() => onTagToggle(tag.id)}
+              className={`tag-button ${selectedTags.includes(tag.id) ? 'selected' : ''}`}
+            >
+              {tag.name}
+              <span className="tag-count">{tag.recipeCount}</span>
+            </button>
+            {onTagDelete && (
+              <button
+                type="button"
+                className={`tag-delete ${confirmDeleteId === tag.id ? 'confirm' : ''}`}
+                onClick={() => {
+                  if (confirmDeleteId === tag.id) {
+                    onTagDelete(tag.id);
+                    setConfirmDeleteId(null);
+                  } else {
+                    setConfirmDeleteId(tag.id);
+                    setTimeout(() => setConfirmDeleteId(null), 3000);
+                  }
+                }}
+                title={confirmDeleteId === tag.id ? 'Click to confirm delete' : 'Delete tag'}
+              >
+                {confirmDeleteId === tag.id ? '?' : '×'}
+              </button>
+            )}
+          </div>
         ))}
       </div>}
       <style>{`
@@ -98,6 +119,43 @@ export function TagFilter({ tags, selectedTags, onTagToggle, isLoading }: TagFil
           display: flex;
           flex-wrap: wrap;
           gap: 0.5rem;
+        }
+        .tag-item {
+          display: inline-flex;
+          align-items: center;
+          position: relative;
+        }
+        .tag-item:hover .tag-delete {
+          opacity: 1;
+        }
+        .tag-delete {
+          position: absolute;
+          right: -0.25rem;
+          top: -0.25rem;
+          width: 1.125rem;
+          height: 1.125rem;
+          padding: 0;
+          border: none;
+          border-radius: 50%;
+          background: var(--color-text-muted);
+          color: var(--color-surface);
+          font-size: 0.75rem;
+          line-height: 1;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.15s ease, background 0.15s ease;
+        }
+        .tag-delete:hover {
+          background: var(--color-danger, #dc3545);
+        }
+        .tag-delete.confirm {
+          opacity: 1;
+          background: var(--color-danger, #dc3545);
+          animation: pulse 0.5s ease infinite alternate;
+        }
+        @keyframes pulse {
+          from { transform: scale(1); }
+          to { transform: scale(1.1); }
         }
         .tag-button {
           display: inline-flex;
